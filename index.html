@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voz Inclusiva</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:linear-gradient(135deg,#4facfe,#00f2fe);min-height:100vh}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:10;display:none}
+.overlay.active{display:block}
+.sidebar{position:fixed;top:0;left:-260px;width:250px;height:100%;background:#fff;z-index:20;transition:.3s;border-radius:0 16px 16px 0;overflow:hidden}
+.sidebar.active{left:0}
+.sb-header{background:#4facfe;padding:18px 16px 12px;color:#fff}
+.sb-header h2{font-size:15px;font-weight:700}
+.sb-body{padding:10px;overflow-y:auto;height:calc(100% - 70px)}
+.sb-btn{width:100%;text-align:left;padding:10px 14px;margin:3px 0;border:none;border-radius:10px;background:#f0f8ff;color:#1a6fb5;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s}
+.sb-btn:hover{background:#d6edff}
+.sb-btn.danger{background:#fff0f0;color:#c0392b}
+.sb-btn.danger:hover{background:#fddede}
+.sb-btn.libras{background:#e8f5e9;color:#2e7d32;font-weight:600}
+.sb-btn.libras:hover{background:#c8e6c9}
+.lang-section{padding:8px 14px 4px;font-size:11px;color:#999;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.lang-btn{width:100%;text-align:left;padding:9px 14px;margin:2px 0;border:none;border-radius:10px;background:transparent;color:#333;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s}
+.lang-btn:hover{background:#f0f8ff}
+.lang-btn.active{background:#e3f2fd;color:#1a6fb5;font-weight:700}
+.lang-btn .flag{font-size:18px;width:24px;text-align:center}
+.menu-btn{position:fixed;top:15px;left:15px;font-size:26px;cursor:pointer;color:#fff;z-index:5;line-height:1}
+.container{background:#fff;margin:70px auto 20px;padding:18px;border-radius:20px;width:340px;max-width:95%;box-shadow:0 10px 30px rgba(0,0,0,.2);text-align:center;position:relative}
+.lang-indicator{display:inline-flex;align-items:center;gap:6px;background:#e3f2fd;border-radius:20px;padding:4px 12px;font-size:12px;color:#1a6fb5;font-weight:600;margin-bottom:12px;cursor:pointer}
+.app-title{font-size:19px;font-weight:700;color:#1a6fb5;margin-bottom:4px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.btn{padding:13px 6px;border:none;border-radius:12px;cursor:pointer;background:#4facfe;color:#fff;font-size:12px;font-weight:600;transition:transform .1s,opacity .1s;line-height:1.3}
+.btn:active{transform:scale(.96);opacity:.85}
+.btn-emergency{background:#ff4d4d;color:#fff}
+.text-input{width:100%;padding:10px 14px;margin-top:4px;border-radius:10px;border:1.5px solid #c8e6ff;font-size:13px;outline:none;color:#222}
+.text-input:focus{border-color:#4facfe}
+.falar-btn{margin-top:9px;padding:10px 20px;background:#4facfe;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;width:100%}
+.sugestoes{margin-top:7px}
+.sug-btn{width:100%;text-align:left;padding:8px 12px;margin-top:4px;background:#f0f8ff;border:1px solid #cde;border-radius:8px;cursor:pointer;color:#1a6fb5;font-size:12px}
+.sug-btn:hover{background:#d6edff}
+.modal{position:absolute;inset:0;background:rgba(255,255,255,.97);border-radius:20px;z-index:30;display:none;flex-direction:column;padding:18px}
+.modal.active{display:flex}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.modal-title{font-size:15px;font-weight:700;color:#1a6fb5}
+.close-btn{background:#eef6ff;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:17px;color:#555}
+.modal-body{flex:1;overflow-y:auto}
+.freq-item{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#f0f8ff;border-radius:10px;margin-bottom:7px}
+.freq-item .frase{font-size:12px;color:#222;flex:1}
+.freq-item .badge{background:#4facfe;color:#fff;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;margin:0 7px}
+.freq-item .play-btn{background:#e8f5e9;border:none;border-radius:8px;padding:4px 8px;cursor:pointer;font-size:14px}
+.empty-msg{color:#999;font-size:13px;text-align:center;padding:24px 0}
+.cfg-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #eee}
+.cfg-label{font-size:13px;color:#333}
+.cfg-desc{font-size:11px;color:#aaa;margin-top:2px}
+.toggle{width:42px;height:24px;background:#ccc;border-radius:12px;position:relative;cursor:pointer;transition:background .2s;border:none;flex-shrink:0}
+.toggle.on{background:#4facfe}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s}
+.toggle.on::after{left:21px}
+.sobre-block{background:#f0f8ff;border-radius:12px;padding:12px;margin-bottom:10px}
+.sobre-block h3{font-size:12px;color:#1a6fb5;margin-bottom:5px}
+.sobre-block p{font-size:11px;color:#555;line-height:1.6}
+.confirm-box{background:#fff3f3;border:1.5px solid #fbb;border-radius:12px;padding:16px;text-align:center}
+.confirm-box p{font-size:13px;color:#333;margin-bottom:12px}
+.confirm-row{display:flex;gap:8px;justify-content:center}
+.confirm-row button{padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600}
+.btn-cancel{background:#eee;color:#555}
+.btn-confirm{background:#ff4d4d;color:#fff}
+select{padding:5px 9px;border-radius:8px;border:1.5px solid #c8e6ff;font-size:12px;color:#333;background:#fff;cursor:pointer}
+.input-row{display:flex;gap:8px;align-items:center;margin-top:4px}
+.input-row .text-input{margin-top:0;flex:1}
+.mic-btn{flex-shrink:0;width:44px;height:44px;border:none;border-radius:12px;background:#e3f2fd;color:#1a6fb5;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .1s}
+.mic-btn:hover{background:#c8e6ff}
+.mic-btn.listening{background:#ff4d4d;color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.mic-status{font-size:11px;color:#888;margin-top:5px;min-height:16px;text-align:center}
+.mic-status.active{color:#ff4d4d;font-weight:600}
+
+/* ── LIBRAS MODAL ── */
+.libras-modal{position:fixed;inset:0;background:#000;z-index:100;display:none;flex-direction:column}
+.libras-modal.active{display:flex}
+.libras-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(0,0,0,.7)}
+.libras-topbar h2{color:#fff;font-size:15px}
+.libras-close{background:#333;border:none;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:20px}
+.cam-wrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#libras-video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+#libras-canvas{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1)}
+.libras-overlay-ui{position:absolute;bottom:0;left:0;right:0;padding:16px;background:linear-gradient(transparent,rgba(0,0,0,.8))}
+.libras-status-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:5px 14px;color:#fff;font-size:12px;margin-bottom:10px}
+.libras-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:blink 1.2s infinite}
+.libras-dot.off{background:#888;animation:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.libras-resultado{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:12px 14px;margin-bottom:12px;min-height:52px}
+.libras-resultado p{color:#fff;font-size:14px;line-height:1.5;text-align:center}
+.libras-resultado .interim{color:rgba(255,255,255,.55);font-style:italic}
+.libras-resultado .placeholder{color:rgba(255,255,255,.4);font-size:12px}
+.libras-actions{display:flex;gap:8px}
+.libras-actions button{flex:1;padding:11px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600}
+.libras-usar{background:#4facfe;color:#fff}
+.libras-limpar{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)!important}
+.libras-usar:disabled{background:#555;color:#999;cursor:default}
+.hand-badge{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:5px 10px;color:#fff;font-size:11px;text-align:center}
+.hand-badge span{display:block;font-size:18px}
+.libras-loading{position:absolute;inset:0;background:rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:12px}
+.libras-loading p{font-size:13px;opacity:.7}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#4facfe;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.libras-info-block{background:rgba(79,172,254,.15);border:1px solid rgba(79,172,254,.4);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.libras-info-block p{color:rgba(255,255,255,.8);font-size:11px;line-height:1.6}
+.libras-info-block strong{color:#7dd3fc}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<div class="menu-btn" onclick="toggleSidebar()">&#9776;</div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <h2>&#128483; Voz Inclusiva</h2>
+    <p style="font-size:11px;opacity:.85;margin-top:3px">Menu principal</p>
+  </div>
+  <div class="sb-body">
+    <button class="sb-btn libras" onclick="abrirLibras()">&#128247; Modo Libras (câmera)</button>
+    <hr style="margin:6px 0;border:none;border-top:1px solid #eee">
+    <button class="sb-btn" onclick="openModal('modal-mais')">&#11088; Mais usadas</button>
+    <button class="sb-btn" onclick="openModal('modal-config')">&#9881;&#65039; Configurações</button>
+    <button class="sb-btn" onclick="openModal('modal-sobre')">&#8505;&#65039; Sobre</button>
+    <hr style="margin:8px 0;border:none;border-top:1px solid #eee">
+    <button class="sb-btn danger" onclick="openModal('modal-limpar')">&#128465;&#65039; Limpar histórico</button>
+    <div class="lang-section">Idioma da voz</div>
+    <div id="lang-list"></div>
+  </div>
+</div>
+
+<!-- ── LIBRAS FULL-SCREEN MODAL ── -->
+<div class="libras-modal" id="libras-modal">
+  <div class="libras-topbar">
+    <h2>&#128075; Modo Libras</h2>
+    <button class="libras-close" onclick="fecharLibras()">&#10005;</button>
+  </div>
+  <div class="cam-wrap">
+    <video id="libras-video" autoplay playsinline muted></video>
+    <canvas id="libras-canvas"></canvas>
+
+    <!-- loading overlay -->
+    <div class="libras-loading" id="libras-loading">
+      <div class="spinner"></div>
+      <p>Iniciando câmera e detector de mãos...</p>
+    </div>
+
+    <!-- hand count badge -->
+    <div class="hand-badge" id="hand-badge">
+      <span id="hand-emoji">&#128075;</span>
+      <div id="hand-count" style="font-size:10px;opacity:.7">aguardando</div>
+    </div>
+
+    <!-- bottom UI -->
+    <div class="libras-overlay-ui">
+      <div style="text-align:center;margin-bottom:8px">
+        <div class="libras-status-pill">
+          <div class="libras-dot" id="libras-dot"></div>
+          <span id="libras-status-txt">Detector ativo — faça um sinal</span>
+        </div>
+      </div>
+      <div class="libras-info-block">
+        <p>&#128161; <strong>Fase de desenvolvimento:</strong> a câmera detecta e rastreia suas mãos em tempo real (21 pontos por mão via MediaPipe). O classificador de sinais de Libras será integrado na próxima fase do projeto.</p>
+      </div>
+      <div class="libras-resultado">
+        <p id="libras-texto-resultado"><span class="placeholder">O texto reconhecido aparecerá aqui...</span></p>
+      </div>
+      <div class="libras-actions">
+        <button class="libras-limpar" onclick="limparResultadoLibras()">&#128465; Limpar</button>
+        <button class="libras-usar" id="libras-usar-btn" onclick="usarTextoLibras()" disabled>&#9654; Usar texto</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div class="container" id="main-container">
+  <div class="app-title">&#128483; Voz Inclusiva</div>
+  <div class="lang-indicator" onclick="toggleSidebar()" title="Trocar idioma">
+    <span id="lang-flag-top"></span>
+    <span id="lang-name-top"></span>
+    <span style="opacity:.6;font-size:10px">&#9660;</span>
+  </div>
+
+  <div class="grid" id="btn-grid"></div>
+
+  <div class="input-row">
+    <input class="text-input" type="text" id="texto" placeholder="..." oninput="sugerir()">
+    <button class="mic-btn" id="mic-btn" onclick="toggleMic()" title="Falar para transcrever">&#127908;</button>
+  </div>
+  <div class="mic-status" id="mic-status"></div>
+  <button class="falar-btn" onclick="falarTexto()">&#9654;&#65039; <span id="falar-label">Falar</span></button>
+  <div class="sugestoes" id="sugestoes"></div>
+
+  <!-- MODAL: Mais Usadas -->
+  <div class="modal" id="modal-mais">
+    <div class="modal-header">
+      <span class="modal-title">&#11088; Mais usadas</span>
+      <button class="close-btn" onclick="closeModal('modal-mais')">&#10005;</button>
+    </div>
+    <div class="modal-body" id="lista-mais"></div>
+  </div>
+
+  <!-- MODAL: Limpar Histórico -->
+  <div class="modal" id="modal-limpar">
+    <div class="modal-header">
+      <span class="modal-title">&#128465;&#65039; Limpar histórico</span>
+      <button class="close-btn" onclick="closeModal('modal-limpar')">&#10005;</button>
+    </div>
+    <div class="modal-body" style="display:flex;align-items:center;justify-content:center;height:100%">
+      <div class="confirm-box">
+        <p id="confirm-text"></p>
+        <div class="confirm-row">
+          <button class="btn-cancel" id="cancel-btn" onclick="closeModal('modal-limpar')">Cancelar</button>
+          <button class="btn-confirm" id="confirm-del-btn" onclick="confirmarLimpar()">Limpar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Configurações -->
+  <div class="modal" id="modal-config">
+    <div class="modal-header">
+      <span class="modal-title">&#9881;&#65039; Configurações</span>
+      <button class="close-btn" onclick="closeModal('modal-config')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="cfg-row">
+        <div><div class="cfg-label">Velocidade da fala</div><div class="cfg-desc">Mais lento ou rápido</div></div>
+        <select id="cfg-velocidade" onchange="salvarConfig()">
+          <option value="0.7">🐢 Lento</option>
+          <option value="1" selected>▶ Normal</option>
+          <option value="1.4">🐇 Rápido</option>
+        </select>
+      </div>
+      <div class="cfg-row">
+        <div><div class="cfg-label">Tom da voz</div><div class="cfg-desc">Grave ou agudo</div></div>
+        <select id="cfg-tom" onchange="salvarConfig()">
+          <option value="0.8">🎸 Grave</option>
+          <option value="1" selected>🎹 Normal</option>
+          <option value="1.3">🎺 Agudo</option>
+        </select>
+      </div>
+      <div class="cfg-row">
+        <div><div class="cfg-label">Sugestões automáticas</div><div class="cfg-desc">Mostrar ao digitar</div></div>
+        <button class="toggle on" id="toggle-sugestoes" onclick="toggleCfg('sugestoes')"></button>
+      </div>
+      <div class="cfg-row" style="border:none">
+        <div><div class="cfg-label">Vibração</div><div class="cfg-desc">Feedback háptico</div></div>
+        <button class="toggle on" id="toggle-vibracao" onclick="toggleCfg('vibracao')"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Sobre -->
+  <div class="modal" id="modal-sobre">
+    <div class="modal-header">
+      <span class="modal-title">&#8505;&#65039; Sobre</span>
+      <button class="close-btn" onclick="closeModal('modal-sobre')">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="sobre-block"><h3>🎓 O que é?</h3><p>Comunicador de voz alternativa e aumentativa (CAA) para pessoas com dificuldade de fala. Disponível em múltiplos idiomas.</p></div>
+      <div class="sobre-block"><h3>⚡ Recursos</h3><p>✓ 8 idiomas suportados<br>✓ Frases rápidas traduzidas<br>✓ Microfone com reconhecimento de fala<br>✓ Câmera com detecção de mãos (Libras)<br>✓ Histórico de frases mais usadas<br>✓ Configurações de voz</p></div>
+      <div class="sobre-block" style="background:#e8f5e9"><h3>🤟 Modo Libras</h3><p>Detecta e rastreia mãos em tempo real via MediaPipe Hands (Google). Base técnica pronta para integrar classificador de sinais de Libras.</p></div>
+      <div class="sobre-block" style="background:#fff3e0"><h3>🛠️ Hackathon</h3><p>Criado em hackathon com foco em tecnologia inclusiva e acessibilidade digital.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- MediaPipe via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+
+<script>
+// ══════════════════════════════════════════
+// IDIOMAS
+// ══════════════════════════════════════════
+const IDIOMAS = {
+  'pt-BR': {
+    flag:'🇧🇷', nome:'Português (BR)', lang:'pt-BR',
+    frases:[
+      {emoji:'💧',label:'Água',texto:'Quero água'},
+      {emoji:'🍽️',label:'Fome',texto:'Estou com fome'},
+      {emoji:'🚻',label:'Banheiro',texto:'Quero ir ao banheiro'},
+      {emoji:'😴',label:'Cansaço',texto:'Estou cansado'},
+      {emoji:'🆘',label:'Ajuda',texto:'Preciso de ajuda urgente',emergency:true},
+      {emoji:'🙏',label:'Obrigado',texto:'Obrigado'},
+    ],
+    banco:['Quero água','Estou com fome','Quero ir ao banheiro','Estou cansado','Preciso de ajuda','Estou com dor','Obrigado','Por favor','Estou feliz','Estou triste','Quero dormir','Estou com calor','Estou com frio'],
+    placeholder:'Digite algo...',falar:'Falar',maisUsadas:'Mais usadas',semDados:'Nenhuma frase usada ainda.',
+    confirmar:'Tem certeza? Isso apagará todo o histórico.',cancelar:'Cancelar',limpar:'Limpar',
+    micOuvindo:'Ouvindo... fale agora',micParar:'Toque para parar',micSemSupporte:'Microfone não suportado neste navegador',
+  },
+  'en-US': {
+    flag:'🇺🇸', nome:'English (US)', lang:'en-US',
+    frases:[
+      {emoji:'💧',label:'Water',texto:'I want water'},
+      {emoji:'🍽️',label:'Hungry',texto:"I'm hungry"},
+      {emoji:'🚻',label:'Bathroom',texto:'I need the bathroom'},
+      {emoji:'😴',label:'Tired',texto:"I'm tired"},
+      {emoji:'🆘',label:'Help',texto:'I need urgent help',emergency:true},
+      {emoji:'🙏',label:'Thanks',texto:'Thank you'},
+    ],
+    banco:['I want water',"I'm hungry",'I need the bathroom',"I'm tired",'I need help',"I'm in pain",'Thank you','Please',"I'm happy",'I feel sad','I want to sleep',"I'm hot","I'm cold"],
+    placeholder:'Type something...',falar:'Speak',maisUsadas:'Most used',semDados:'No phrases used yet.',
+    confirmar:'Sure? This will clear all history.',cancelar:'Cancel',limpar:'Clear',
+    micOuvindo:'Listening... speak now',micParar:'Tap to stop',micSemSupporte:'Microphone not supported in this browser',
+  },
+  'es-ES': {
+    flag:'🇪🇸', nome:'Español', lang:'es-ES',
+    frases:[
+      {emoji:'💧',label:'Agua',texto:'Quiero agua'},
+      {emoji:'🍽️',label:'Hambre',texto:'Tengo hambre'},
+      {emoji:'🚻',label:'Baño',texto:'Quiero ir al baño'},
+      {emoji:'😴',label:'Cansado',texto:'Estoy cansado'},
+      {emoji:'🆘',label:'Ayuda',texto:'Necesito ayuda urgente',emergency:true},
+      {emoji:'🙏',label:'Gracias',texto:'Gracias'},
+    ],
+    banco:['Quiero agua','Tengo hambre','Quiero ir al baño','Estoy cansado','Necesito ayuda','Tengo dolor','Gracias','Por favor','Estoy feliz','Estoy triste','Quiero dormir','Tengo calor','Tengo frío'],
+    placeholder:'Escribe algo...',falar:'Hablar',maisUsadas:'Más usadas',semDados:'Ninguna frase usada aún.',
+    confirmar:'¿Seguro? Se borrará todo el historial.',cancelar:'Cancelar',limpar:'Borrar',
+    micOuvindo:'Escuchando... habla ahora',micParar:'Toca para detener',micSemSupporte:'Micrófono no compatible con este navegador',
+  },
+  'fr-FR': {
+    flag:'🇫🇷', nome:'Français', lang:'fr-FR',
+    frases:[
+      {emoji:'💧',label:'Eau',texto:"Je veux de l'eau"},
+      {emoji:'🍽️',label:'Faim',texto:"J'ai faim"},
+      {emoji:'🚻',label:'Toilettes',texto:'Je veux aller aux toilettes'},
+      {emoji:'😴',label:'Fatigué',texto:'Je suis fatigué'},
+      {emoji:'🆘',label:'Aide',texto:"J'ai besoin d'aide urgente",emergency:true},
+      {emoji:'🙏',label:'Merci',texto:'Merci'},
+    ],
+    banco:["Je veux de l'eau","J'ai faim",'Je veux aller aux toilettes','Je suis fatigué',"J'ai besoin d'aide","J'ai mal",'Merci',"S'il vous plaît",'Je suis heureux','Je suis triste','Je veux dormir',"J'ai chaud","J'ai froid"],
+    placeholder:'Tapez quelque chose...',falar:'Parler',maisUsadas:'Plus utilisées',semDados:'Aucune phrase utilisée encore.',
+    confirmar:"Sûr ? Cela effacera tout l'historique.",cancelar:'Annuler',limpar:'Effacer',
+    micOuvindo:'Écoute... parlez maintenant',micParar:'Touchez pour arrêter',micSemSupporte:'Microphone non pris en charge',
+  },
+  'de-DE': {
+    flag:'🇩🇪', nome:'Deutsch', lang:'de-DE',
+    frases:[
+      {emoji:'💧',label:'Wasser',texto:'Ich möchte Wasser'},
+      {emoji:'🍽️',label:'Hunger',texto:'Ich habe Hunger'},
+      {emoji:'🚻',label:'Toilette',texto:'Ich muss zur Toilette'},
+      {emoji:'😴',label:'Müde',texto:'Ich bin müde'},
+      {emoji:'🆘',label:'Hilfe',texto:'Ich brauche dringend Hilfe',emergency:true},
+      {emoji:'🙏',label:'Danke',texto:'Danke'},
+    ],
+    banco:['Ich möchte Wasser','Ich habe Hunger','Ich muss zur Toilette','Ich bin müde','Ich brauche Hilfe','Ich habe Schmerzen','Danke','Bitte','Ich bin glücklich','Ich bin traurig','Ich möchte schlafen','Mir ist heiß','Mir ist kalt'],
+    placeholder:'Etwas eingeben...',falar:'Sprechen',maisUsadas:'Meistgenutzte',semDados:'Noch keine Sätze verwendet.',
+    confirmar:'Sicher? Damit wird der gesamte Verlauf gelöscht.',cancelar:'Abbrechen',limpar:'Löschen',
+    micOuvindo:'Höre zu... sprechen Sie jetzt',micParar:'Tippen zum Beenden',micSemSupporte:'Mikrofon in diesem Browser nicht unterstützt',
+  },
+  'it-IT': {
+    flag:'🇮🇹', nome:'Italiano', lang:'it-IT',
+    frases:[
+      {emoji:'💧',label:'Acqua',texto:'Voglio acqua'},
+      {emoji:'🍽️',label:'Fame',texto:'Ho fame'},
+      {emoji:'🚻',label:'Bagno',texto:'Voglio andare in bagno'},
+      {emoji:'😴',label:'Stanco',texto:'Sono stanco'},
+      {emoji:'🆘',label:'Aiuto',texto:'Ho bisogno di aiuto urgente',emergency:true},
+      {emoji:'🙏',label:'Grazie',texto:'Grazie'},
+    ],
+    banco:['Voglio acqua','Ho fame','Voglio andare in bagno','Sono stanco','Ho bisogno di aiuto','Ho dolore','Grazie','Per favore','Sono felice','Sono triste','Voglio dormire','Ho caldo','Ho freddo'],
+    placeholder:'Scrivi qualcosa...',falar:'Parlare',maisUsadas:'Più usate',semDados:'Nessuna frase usata ancora.',
+    confirmar:'Sei sicuro? Verrà cancellata tutta la cronologia.',cancelar:'Annulla',limpar:'Cancella',
+    micOuvindo:'In ascolto... parla ora',micParar:'Tocca per fermare',micSemSupporte:'Microfono non supportato in questo browser',
+  },
+  'ja-JP': {
+    flag:'🇯🇵', nome:'日本語', lang:'ja-JP',
+    frases:[
+      {emoji:'💧',label:'水',texto:'水が欲しい'},
+      {emoji:'🍽️',label:'お腹が空いた',texto:'お腹が空いた'},
+      {emoji:'🚻',label:'トイレ',texto:'トイレに行きたい'},
+      {emoji:'😴',label:'疲れた',texto:'疲れた'},
+      {emoji:'🆘',label:'助けて',texto:'助けてください',emergency:true},
+      {emoji:'🙏',label:'ありがとう',texto:'ありがとう'},
+    ],
+    banco:['水が欲しい','お腹が空いた','トイレに行きたい','疲れた','助けてください','痛い','ありがとう','お願いします','嬉しい','悲しい','眠りたい','暑い','寒い'],
+    placeholder:'何か入力...',falar:'話す',maisUsadas:'よく使う',semDados:'まだフレーズが使われていません。',
+    confirmar:'本当に？履歴がすべて削除されます。',cancelar:'キャンセル',limpar:'削除',
+    micOuvindo:'聞いています...話してください',micParar:'タップして停止',micSemSupporte:'このブラウザではマイクは使用できません',
+  },
+  'zh-CN': {
+    flag:'🇨🇳', nome:'中文 (简体)', lang:'zh-CN',
+    frases:[
+      {emoji:'💧',label:'水',texto:'我想喝水'},
+      {emoji:'🍽️',label:'饿了',texto:'我饿了'},
+      {emoji:'🚻',label:'厕所',texto:'我想去厕所'},
+      {emoji:'😴',label:'累了',texto:'我累了'},
+      {emoji:'🆘',label:'帮助',texto:'我需要紧急帮助',emergency:true},
+      {emoji:'🙏',label:'谢谢',texto:'谢谢'},
+    ],
+    banco:['我想喝水','我饿了','我想去厕所','我累了','我需要帮助','我很痛','谢谢','请','我很开心','我很伤心','我想睡觉','我热','我冷'],
+    placeholder:'输入内容...',falar:'说话',maisUsadas:'最常用',semDados:'还没有使用过任何短语。',
+    confirmar:'确定吗？这将清除所有历史记录。',cancelar:'取消',limpar:'清除',
+    micOuvindo:'正在听...请说话',micParar:'点击停止',micSemSupporte:'此浏览器不支持麦克风',
+  },
+};
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function getLangKey(){return localStorage.getItem('langKey')||'pt-BR'}
+function setLangKey(k){localStorage.setItem('langKey',k)}
+function getConfig(){try{return JSON.parse(localStorage.getItem('cfg'))||{velocidade:1,tom:1,sugestoes:true,vibracao:true}}catch(e){return{velocidade:1,tom:1,sugestoes:true,vibracao:true}}}
+function getHistorico(){try{return JSON.parse(localStorage.getItem('historico_'+getLangKey()))||{}}catch(e){return{}}}
+function idioma(){return IDIOMAS[getLangKey()]}
+
+// ══════════════════════════════════════════
+// TTS
+// ══════════════════════════════════════════
+function falar(texto){
+  const cfg=getConfig();
+  const msg=new SpeechSynthesisUtterance(texto);
+  msg.lang=idioma().lang;
+  msg.rate=parseFloat(cfg.velocidade);
+  msg.pitch=parseFloat(cfg.tom);
+  speechSynthesis.speak(msg);
+  if(cfg.vibracao&&navigator.vibrate)navigator.vibrate(80);
+  salvarHistorico(texto);
+}
+function falarTexto(){
+  const t=document.getElementById('texto').value.trim();
+  if(t)falar(t);
+}
+function salvarHistorico(frase){
+  const h=getHistorico();
+  h[frase]=(h[frase]||0)+1;
+  localStorage.setItem('historico_'+getLangKey(),JSON.stringify(h));
+}
+
+// ══════════════════════════════════════════
+// SUGESTÕES
+// ══════════════════════════════════════════
+function sugerir(){
+  const cfg=getConfig();
+  const div=document.getElementById('sugestoes');
+  div.innerHTML='';
+  if(!cfg.sugestoes)return;
+  const input=document.getElementById('texto').value.toLowerCase();
+  if(!input)return;
+  const h=getHistorico();
+  idioma().banco.filter(f=>f.toLowerCase().includes(input))
+    .sort((a,b)=>(h[b]||0)-(h[a]||0))
+    .slice(0,3)
+    .forEach(frase=>{
+      const btn=document.createElement('button');
+      btn.className='sug-btn';
+      btn.innerText=frase;
+      btn.onclick=()=>{falar(frase);document.getElementById('texto').value='';div.innerHTML=''};
+      div.appendChild(btn);
+    });
+}
+
+// ══════════════════════════════════════════
+// RENDER APP
+// ══════════════════════════════════════════
+function renderApp(){
+  const id=idioma();
+  document.getElementById('lang-flag-top').textContent=id.flag;
+  document.getElementById('lang-name-top').textContent=id.nome;
+  document.getElementById('falar-label').textContent=id.falar;
+  document.getElementById('texto').placeholder=id.placeholder;
+  const grid=document.getElementById('btn-grid');
+  grid.innerHTML='';
+  id.frases.forEach(f=>{
+    const btn=document.createElement('button');
+    btn.className='btn'+(f.emergency?' btn-emergency':'');
+    btn.innerHTML=f.emoji+' '+f.label;
+    btn.onclick=()=>falar(f.texto);
+    grid.appendChild(btn);
+  });
+  renderLangList();
+}
+function renderLangList(){
+  const cur=getLangKey();
+  const div=document.getElementById('lang-list');
+  div.innerHTML='';
+  Object.entries(IDIOMAS).forEach(([key,id])=>{
+    const btn=document.createElement('button');
+    btn.className='lang-btn'+(key===cur?' active':'');
+    btn.innerHTML=`<span class="flag">${id.flag}</span>${id.nome}`;
+    btn.onclick=()=>{setLangKey(key);renderApp();closeSidebar()};
+    div.appendChild(btn);
+  });
+}
+
+// ══════════════════════════════════════════
+// SIDEBAR / MODALS
+// ══════════════════════════════════════════
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('active');
+  document.getElementById('overlay').classList.toggle('active');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('active');
+  document.getElementById('overlay').classList.remove('active');
+}
+function openModal(id){
+  closeSidebar();
+  if(id==='modal-mais')renderMaisUsadas();
+  if(id==='modal-config')renderConfig();
+  if(id==='modal-limpar'){
+    const l=idioma();
+    document.getElementById('confirm-text').textContent=l.confirmar;
+    document.getElementById('cancel-btn').textContent=l.cancelar;
+    document.getElementById('confirm-del-btn').textContent=l.limpar;
+  }
+  document.getElementById(id).classList.add('active');
+}
+function closeModal(id){document.getElementById(id).classList.remove('active')}
+
+function renderMaisUsadas(){
+  const h=getHistorico();
+  const l=idioma();
+  const lista=Object.entries(h).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const div=document.getElementById('lista-mais');
+  document.querySelector('#modal-mais .modal-title').textContent='⭐ '+l.maisUsadas;
+  if(!lista.length){div.innerHTML=`<div class="empty-msg">${l.semDados}</div>`;return}
+  div.innerHTML='';
+  lista.forEach(([frase,qtd],i)=>{
+    const item=document.createElement('div');
+    item.className='freq-item';
+    const safe=frase.replace(/'/g,"\\'");
+    item.innerHTML=`<span class="frase">${i+1}. ${frase}</span><span class="badge">${qtd}x</span><button class="play-btn" onclick="falar('${safe}')">▶</button>`;
+    div.appendChild(item);
+  });
+}
+function renderConfig(){
+  const cfg=getConfig();
+  document.getElementById('cfg-velocidade').value=cfg.velocidade;
+  document.getElementById('cfg-tom').value=cfg.tom;
+  setToggle('sugestoes',cfg.sugestoes);
+  setToggle('vibracao',cfg.vibracao);
+}
+function salvarConfig(){
+  const cfg=getConfig();
+  cfg.velocidade=document.getElementById('cfg-velocidade').value;
+  cfg.tom=document.getElementById('cfg-tom').value;
+  localStorage.setItem('cfg',JSON.stringify(cfg));
+}
+function toggleCfg(key){
+  const cfg=getConfig();
+  cfg[key]=!cfg[key];
+  localStorage.setItem('cfg',JSON.stringify(cfg));
+  setToggle(key,cfg[key]);
+}
+function setToggle(key,val){
+  const el=document.getElementById('toggle-'+key);
+  if(val)el.classList.add('on');else el.classList.remove('on');
+}
+function confirmarLimpar(){
+  localStorage.removeItem('historico_'+getLangKey());
+  closeModal('modal-limpar');
+}
+
+// ══════════════════════════════════════════
+// SPEECH RECOGNITION (mic → text)
+// ══════════════════════════════════════════
+let recognition=null, isListening=false;
+function initRecognition(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR)return null;
+  const r=new SR();
+  r.continuous=false; r.interimResults=true; r.lang=idioma().lang;
+  r.onstart=()=>{
+    isListening=true;
+    document.getElementById('mic-btn').classList.add('listening');
+    document.getElementById('mic-btn').innerHTML='&#9632;';
+    const st=document.getElementById('mic-status');
+    st.textContent=idioma().micOuvindo; st.className='mic-status active';
+  };
+  r.onresult=(e)=>{
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i][0].transcript;
+      if(e.results[i].isFinal)final+=t; else interim+=t;
+    }
+    document.getElementById('texto').value=final||interim;
+    sugerir();
+    if(final)stopMic();
+  };
+  r.onerror=(e)=>{
+    stopMic();
+    const st=document.getElementById('mic-status');
+    st.textContent=e.error==='not-allowed'?'⚠️ Permissão negada':'⚠️ Erro: '+e.error;
+    st.className='mic-status';
+  };
+  r.onend=()=>{if(isListening)stopMic()};
+  return r;
+}
+function toggleMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){document.getElementById('mic-status').textContent=idioma().micSemSupporte;return}
+  if(isListening){stopMic();return}
+  recognition=initRecognition();
+  if(recognition)recognition.start();
+}
+function stopMic(){
+  isListening=false;
+  if(recognition){try{recognition.stop()}catch(e){}recognition=null}
+  const btn=document.getElementById('mic-btn');
+  btn.classList.remove('listening'); btn.innerHTML='&#127908;';
+  const st=document.getElementById('mic-status');
+  st.textContent=''; st.className='mic-status';
+}
+
+// ══════════════════════════════════════════
+// LIBRAS — CÂMERA + MEDIAPIPE HANDS
+// ══════════════════════════════════════════
+let camStream=null, mpHands=null, mpCamera=null, librasAtivo=false;
+let textoLibrasAcumulado='';
+
+// Cores dos landmarks por grupo de dedo
+const COR_PALMA='#4facfe', COR_DEDO=['#ff6b6b','#ffa94d','#ffd43b','#69db7c','#74c0fc'];
+
+function abrirLibras(){
+  closeSidebar();
+  document.getElementById('libras-modal').classList.add('active');
+  document.getElementById('libras-loading').style.display='flex';
+  iniciarCameraLibras();
+}
+
+function fecharLibras(){
+  document.getElementById('libras-modal').classList.remove('active');
+  pararCameraLibras();
+}
+
+async function iniciarCameraLibras(){
+  try {
+    // Pedir câmera
+    camStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    const video = document.getElementById('libras-video');
+    video.srcObject = camStream;
+    await new Promise(res=>video.onloadedmetadata=res);
+
+    // Ajustar canvas ao tamanho real do vídeo
+    const canvas = document.getElementById('libras-canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+
+    // Inicializar MediaPipe Hands
+    if(typeof Hands !== 'undefined'){
+      mpHands = new Hands({locateFile: f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+      mpHands.setOptions({maxNumHands:2, modelComplexity:1, minDetectionConfidence:0.7, minTrackingConfidence:0.5});
+      mpHands.onResults(onHandResults);
+
+      if(typeof Camera !== 'undefined'){
+        mpCamera = new Camera(video, {
+          onFrame: async()=>{ await mpHands.send({image:video}) },
+          width:640, height:480
+        });
+        mpCamera.start();
+      }
+    } else {
+      // MediaPipe não carregou — fallback: só mostra vídeo
+      console.warn('MediaPipe Hands não disponível, modo só-câmera ativo.');
+      document.getElementById('libras-status-txt').textContent='Câmera ativa (detector offline)';
+      document.getElementById('libras-dot').classList.add('off');
+      iniciarLoopSemMediaPipe(video, canvas);
+    }
+
+    document.getElementById('libras-loading').style.display='none';
+    librasAtivo=true;
+
+  } catch(err){
+    document.getElementById('libras-loading').innerHTML=
+      `<p style="color:#f87171;font-size:13px;text-align:center;padding:20px">
+      ⚠️ Não foi possível acessar a câmera.<br><br>
+      <span style="opacity:.7;font-size:11px">${err.message}</span></p>`;
+  }
+}
+
+// Fallback: espelha vídeo no canvas sem detecção
+function iniciarLoopSemMediaPipe(video, canvas){
+  const ctx=canvas.getContext('2d');
+  function loop(){
+    if(!librasAtivo)return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// Callback principal do MediaPipe
+function onHandResults(results){
+  const canvas=document.getElementById('libras-canvas');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  const nMaos = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
+
+  // Atualiza badge de mãos
+  document.getElementById('hand-emoji').textContent = nMaos===0?'🤚': nMaos===1?'🤟':'🙌';
+  document.getElementById('hand-count').textContent = nMaos===0?'nenhuma mão': nMaos===1?'1 mão detectada':'2 mãos detectadas';
+
+  if(nMaos>0){
+    results.multiHandLandmarks.forEach((landmarks, idx)=>{
+      // Desenha conexões
+      if(typeof drawConnectors!=='undefined'){
+        drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {color:'rgba(255,255,255,0.25)', lineWidth:2});
+      }
+      // Desenha pontos coloridos por dedo
+      desenharPontosMao(ctx, landmarks, canvas.width, canvas.height);
+    });
+
+    // ── CLASSIFICADOR PLACEHOLDER ──
+    // Aqui entrará o modelo de Libras.
+    // Por ora: detecta gestos simples de postura da mão (demonstração)
+    const gesto = classificarGestoDemo(results.multiHandLandmarks[0]);
+    if(gesto){
+      atualizarTextoLibras(gesto);
+    }
+
+    document.getElementById('libras-status-txt').textContent='Mão detectada — analisando sinal...';
+  } else {
+    document.getElementById('libras-status-txt').textContent='Detector ativo — faça um sinal';
+  }
+}
+
+function desenharPontosMao(ctx, landmarks, w, h){
+  // Grupos: 0=pulso, 1-4=polegar, 5-8=indicador, 9-12=médio, 13-16=anelar, 17-20=mínimo
+  const grupos=[[0],[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]];
+  grupos.forEach((grupo,gi)=>{
+    const cor = gi===0 ? COR_PALMA : COR_DEDO[gi-1];
+    grupo.forEach(idx=>{
+      const lm=landmarks[idx];
+      const x=lm.x*w, y=lm.y*h;
+      ctx.beginPath();
+      ctx.arc(x,y,gi===0?7:5,0,2*Math.PI);
+      ctx.fillStyle=cor;
+      ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.4)';
+      ctx.lineWidth=1.5;
+      ctx.stroke();
+    });
+  });
+}
+
+// ── CLASSIFICADOR DE DEMONSTRAÇÃO ──
+// Detecta posturas muito simples pela altura relativa dos dedos.
+// Este é o ponto de extensão para o modelo real de Libras.
+let ultimoGesto='', framesSemGesto=0, framesComGesto=0;
+function classificarGestoDemo(landmarks){
+  if(!landmarks||landmarks.length<21)return null;
+
+  // Ponta dos dedos vs nós das juntas (indicador=8vs6, médio=12vs10, etc.)
+  const dedoAberto=(ponta,junta)=> landmarks[ponta].y < landmarks[junta].y;
+  const indicador=dedoAberto(8,6);
+  const medio=dedoAberto(12,10);
+  const anelar=dedoAberto(16,14);
+  const minimo=dedoAberto(20,18);
+  const polegar=landmarks[4].x < landmarks[3].x; // simplificado
+
+  // Mapa de posturas → label demonstrativo
+  let gesto=null;
+  if(indicador&&medio&&anelar&&minimo) gesto='[mão aberta]';
+  else if(!indicador&&!medio&&!anelar&&!minimo) gesto='[mão fechada]';
+  else if(indicador&&!medio&&!anelar&&minimo) gesto='[🤟 ILY]';
+  else if(indicador&&!medio&&!anelar&&!minimo) gesto='[☝️ um]';
+  else if(indicador&&medio&&!anelar&&!minimo) gesto='[✌️ dois]';
+
+  if(!gesto){framesSemGesto++;framesComGesto=0;return null}
+  framesComGesto++;
+  if(framesComGesto>18&&gesto!==ultimoGesto){ // ~0.6s estável
+    ultimoGesto=gesto;
+    return gesto;
+  }
+  return null;
+}
+
+let ultimoTextoAdicionado='', debounceTimer=null;
+function atualizarTextoLibras(novoGesto){
+  if(novoGesto===ultimoTextoAdicionado)return;
+  clearTimeout(debounceTimer);
+  debounceTimer=setTimeout(()=>{
+    ultimoTextoAdicionado=novoGesto;
+    textoLibrasAcumulado=(textoLibrasAcumulado+' '+novoGesto).trim();
+    const el=document.getElementById('libras-texto-resultado');
+    el.innerHTML=`<span style="color:#fff">${textoLibrasAcumulado}</span>`;
+    document.getElementById('libras-usar-btn').disabled=false;
+  },300);
+}
+
+function limparResultadoLibras(){
+  textoLibrasAcumulado='';
+  ultimoTextoAdicionado='';
+  document.getElementById('libras-texto-resultado').innerHTML=
+    '<span class="placeholder">O texto reconhecido aparecerá aqui...</span>';
+  document.getElementById('libras-usar-btn').disabled=true;
+}
+
+function usarTextoLibras(){
+  if(!textoLibrasAcumulado)return;
+  document.getElementById('texto').value=textoLibrasAcumulado;
+  fecharLibras();
+  sugerir();
+}
+
+function pararCameraLibras(){
+  librasAtivo=false;
+  if(mpCamera){try{mpCamera.stop()}catch(e){} mpCamera=null}
+  if(mpHands){try{mpHands.close()}catch(e){} mpHands=null}
+  if(camStream){camStream.getTracks().forEach(t=>t.stop()); camStream=null}
+  const video=document.getElementById('libras-video');
+  video.srcObject=null;
+  const ctx=document.getElementById('libras-canvas').getContext('2d');
+  ctx.clearRect(0,0,640,480);
+  limparResultadoLibras();
+  ultimoGesto=''; framesComGesto=0; framesSemGesto=0;
+  document.getElementById('libras-loading').style.display='flex';
+  document.getElementById('libras-loading').innerHTML=
+    '<div class="spinner"></div><p>Iniciando câmera e detector de mãos...</p>';
+}
+
+// ══════════════════════════════════════════
+renderApp();
+</script>
+</body>
+</html>
